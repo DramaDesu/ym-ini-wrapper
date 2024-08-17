@@ -1,7 +1,7 @@
 # ym-ini-wrapper
 Yet More Ini Wrapper
 
-Wrapper for sampleini https://github.com/brofield/simpleini
+Wrapper for sampleini (might support another backend) https://github.com/brofield/simpleini
 
 Motivation:
 - unified API, which is independent of sampleini (It is possible to substitute the backend to work with ini)
