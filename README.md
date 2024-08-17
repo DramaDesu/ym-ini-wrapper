@@ -8,6 +8,6 @@ Motivation:
 - Support find path for ini files
 
 Find path example:
-auto&& banks = ym::ini::search_values(*handle, "Resources", "rom/gems/bank"); // will find all values along this path
+> auto&& banks = ym::ini::search_values(*handle, "Resources", "rom/gems/bank"); // will find all values along this path
 
 API (WIP)
