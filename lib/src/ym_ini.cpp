@@ -3,6 +3,8 @@
 #include <format>
 #include <iostream>
 #include <ranges>
+#include <stack>
+#include <unordered_map>
 
 #include "SimpleIni.h"
 
@@ -77,12 +79,29 @@ namespace
 		std::vector<char> data;
 	};
 
+	template<typename T>
+	struct iterator_guard
+	{
+		iterator_guard(T& in_it) : it(in_it) {}
+
+		~iterator_guard() { ++it; }
+
+		std::string_view key() const { return it.key(); }
+		std::string_view operator*() const { return *it; }
+
+		operator bool() const { return it; }
+
+		T& it;
+	};
+
 	struct ini_values_iterator
 	{
 		ini_values_iterator(const CSimpleIniA::TKeyVal& in_section, std::string_view in_key) : section_(in_section), key_(in_key)
 		{
 			forward();
 		}
+
+		std::string_view key() const { return key_; }
 
 		std::string_view operator*() const { return out_value; }
 
@@ -184,10 +203,99 @@ namespace
 			}
 		}
 	}
+
+	struct it_impl : ym::ini::path_iterator::impl
+	{
+		it_impl(CSimpleIniA& in_ini, const char* in_section, const char* in_path) : ini_(in_ini), section_(in_section), path_(in_path)
+		{
+			if (const auto* section = in_ini.GetSection(in_section))
+			{
+				values_it.emplace(*section , path_.current());
+			}
+		}
+
+		void forward() override
+		{
+			has_next_values = false;
+			while (!values_it.empty())
+			{
+				if (auto it = iterator_guard(values_it.top()))
+				{
+					if (path_.is_value())
+					{
+						has_next_values = true;
+						current_value = *it;
+						break;
+					}
+
+					const auto* section_name = (*it).data();
+					if (const auto* section = ini_.GetSection(section_name))
+					{
+						values_mapping.insert_or_assign(it.key(), *it);
+
+						path_.push();
+						values_it.emplace(*section, path_.current());
+					}
+				}
+				else
+				{
+					values_it.pop();
+					path_.pop();
+				}
+			}
+		}
+
+		bool get_has_next_values() const override { return has_next_values; }
+		std::string_view get_current_value() const override { return current_value; }
+
+		std::string_view get_value(const char* in_path_part) const override
+		{
+			const auto it = values_mapping.find(in_path_part);
+			return it != values_mapping.cend() ? it->second : "";
+		}
+
+	private:
+		bool has_next_values = false;
+		std::string_view current_value;
+
+		CSimpleIniA& ini_;
+		std::string_view section_;
+		path_t path_;
+
+		std::stack<ini_values_iterator> values_it;
+		std::unordered_map<std::string_view, std::string_view> values_mapping;
+	};
 }
 
 namespace ym::ini
 {
+	path_iterator::path_iterator(const handler& in_handler, const char* in_section, const char* in_path)
+	{
+		impl_ = std::make_unique<it_impl>(in_handler.get_impl<CSimpleIniA>(), in_section, in_path);
+		impl_->forward();
+	}
+
+	value_t path_iterator::operator*() const
+	{
+		return impl_->get_current_value();
+	}
+
+	path_iterator& path_iterator::operator++()
+	{
+		impl_->forward();
+		return *this;
+	}
+
+	path_iterator::operator bool() const
+	{
+		return impl_->get_has_next_values();
+	}
+
+	value_t path_iterator::get_value(const char* in_path_part) const
+	{
+		return impl_->get_value(in_path_part);
+	}
+
 	std::unique_ptr<handler> load(const char* path)
 	{
 		auto ini = std::make_unique<CSimpleIniA>();

@@ -1,5 +1,6 @@
 #include "ym_ini.h"
 
+#include <format>
 #include <iostream>
 
 int main()
@@ -67,6 +68,15 @@ int main()
 			{
 				std::cout << key << "\n";
 			}
+		}
+
+		std::cout << "\n-------------------PATH---------------------" << "\n\n";
+		for (auto it = ym::ini::path_iterator(*handle, "Resources", "rom/gems/bank"); it; ++it)
+		{
+			auto&& rom = it.get_value("rom");
+			auto&& rom_path = ym::ini::get_value(*handle, rom.data(), "path");
+
+			std::cout << std::format("bank={}, rom={}, rom_path={}\n", *it, rom, rom_path);
 		}
 	}
 

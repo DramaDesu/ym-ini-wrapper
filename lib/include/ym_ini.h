@@ -24,6 +24,32 @@ namespace ym::ini
 	using value_t = std::string_view;
 	using values_t = std::vector<value_t>;
 
+	struct path_iterator
+	{
+		path_iterator(const handler& in_handler, const char* in_section, const char* in_path);
+
+		value_t operator*() const;
+		path_iterator& operator++();
+
+		operator bool() const;
+
+		value_t get_value(const char* in_path_part) const;
+
+		struct impl
+		{
+			virtual ~impl() = default;
+
+			virtual void forward() = 0;
+
+			virtual bool get_has_next_values() const = 0;
+			virtual std::string_view get_current_value() const = 0;
+
+			virtual value_t get_value(const char* in_path_part) const = 0;
+		};
+	protected:
+		std::unique_ptr<impl> impl_;
+	};
+
 	handler_t load(const char* path);
 
 	bool has_section(const handler& in_handler, const char* in_section);
