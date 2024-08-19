@@ -34,6 +34,7 @@ namespace ym::ini
 	bool has_value(const handler& in_handler, const char* in_section, const char* in_key);
 	value_t get_value(const handler& in_handler, const char* in_section, const char* in_key);
 	bool get_bool(const handler& in_handler, const char* in_section, const char* in_key, bool in_default = false);
+	long get_long(const handler& in_handler, const char* in_section, const char* in_key, long in_default = 0);
 
 	values_t get_values(const handler& in_handler, const char* in_section, const char* in_key);
 	std::vector<bool> get_booleans(const handler& in_handler, const char* in_section, const char* in_key);

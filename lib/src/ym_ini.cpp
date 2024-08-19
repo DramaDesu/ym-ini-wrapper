@@ -79,7 +79,7 @@ namespace
 
 	struct ini_values_iterator
 	{
-		ini_values_iterator(const CSimpleIniA::TKeyVal& in_section, std::string_view in_key) : section(in_section), key(in_key)
+		ini_values_iterator(const CSimpleIniA::TKeyVal& in_section, std::string_view in_key) : section_(in_section), key_(in_key)
 		{
 			forward();
 		}
@@ -124,11 +124,11 @@ namespace
 
 			if (!found_keys)
 			{
-				if (auto target_key = section.find(key.data()); target_key != section.cend())
+				if (auto target_key = section_.find(key_.data()); target_key != section_.cend())
 				{
 					has_keys = true;
 					found_keys = true;
-					out_key = key;
+					out_key = key_;
 					out_value = target_key->second;
 					return;
 				}
@@ -136,8 +136,8 @@ namespace
 			}
 			if (found_keys)
 			{
-				const auto next_key = std::format("{}[{}]", key, key_index++);
-				if (auto target_key = section.find(next_key.c_str()); target_key != section.cend())
+				const auto next_key = std::format("{}[{}]", key_, key_index++);
+				if (auto target_key = section_.find(next_key.c_str()); target_key != section_.cend())
 				{
 					has_keys = true;
 					out_key = target_key->first.pItem;
@@ -146,8 +146,8 @@ namespace
 			}
 		}
 
-		const CSimpleIniA::TKeyVal& section;
-		const std::string_view key;
+		const CSimpleIniA::TKeyVal& section_;
+		const std::string_view key_;
 
 		std::string_view out_key;
 		std::string_view out_value;
@@ -239,7 +239,13 @@ namespace ym::ini
 	bool get_bool(const handler& in_handler, const char* in_section, const char* in_key, bool in_default)
 	{
 		const auto& ini = in_handler.get_impl<CSimpleIniA>();
-		return ini.GetBoolValue(in_key, in_key, in_default);
+		return ini.GetBoolValue(in_section, in_key, in_default);
+	}
+
+	long get_long(const handler& in_handler, const char* in_section, const char* in_key, long in_default)
+	{
+		const auto& ini = in_handler.get_impl<CSimpleIniA>();
+		return ini.GetLongValue(in_section, in_key, in_default);
 	}
 
 	values_t get_values(const handler& in_handler, const char* in_section, const char* in_key)
