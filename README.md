@@ -8,6 +8,18 @@ Motivation:
 - Support find path for ini files
 
 Find path example:
-> auto&& banks = ym::ini::search_values(*handle, "Resources", "rom/gems/bank"); // will find all values along this path
+```
+if (auto ini_handle = ym::ini::load(RESOURCE_PATH"/Settings/Data.ini")) {
+  auto&& banks_names = ym::ini::search_values(*ini_handle, resources_section_name, "rom/gems/bank");
+  for (auto&& bank_name : banks_names) {
+    const auto instruments = ym::ini::get_long(*ini_handle, bank_name.data(), "instruments");
+    const auto envelopes = ym::ini::get_long(*ini_handle, bank_name.data(), "envelopes");
+    const auto sequences = ym::ini::get_long(*ini_handle, bank_name.data(), "sequences");
+    const auto samples = ym::ini::get_long(*ini_handle, bank_name.data(), "samples");
+
+    banks.emplace_back(bank_name.data(), instruments, envelopes, sequences, samples);
+  }
+}
+```
 
 API (WIP)
