@@ -1,0 +1,7 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+find_path(SIMPLEINI_INCLUDE_DIRS "ConvertUTF.c")
+
+include("${CMAKE_CURRENT_LIST_DIR}/ym_ini-targets.cmake")

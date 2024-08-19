@@ -7,6 +7,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_executable(ym-ini-test "ym_ini_test.cpp")
 
-target_link_libraries(ym-ini-test PRIVATE ym_ini)
+target_link_libraries(ym-ini-test PRIVATE ym-ini)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Data.ini ${CMAKE_CURRENT_BINARY_DIR}/Data.ini COPYONLY)
