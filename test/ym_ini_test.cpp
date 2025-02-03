@@ -78,6 +78,12 @@ int main()
 
 			std::cout << std::format("bank={}, rom={}, rom_path={}\n", *it, rom, rom_path);
 		}
+
+		std::cout << "\n-------------------PATH FOR EACH---------------------" << "\n\n";
+		ym::ini::for_each(handle.get(), "Resources", "rom/gems/bank", [](auto&& category, auto&& key, auto&& value)
+		{
+			std::cout << std::format("category={}, key={}, value={}\n", category, key, value.as_string());
+		});
 	}
 
 	std::cout << "\n---------------load---Data2.ini--------------" << "\n\n";

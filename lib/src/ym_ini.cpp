@@ -224,6 +224,7 @@ namespace
 					if (path_.is_value())
 					{
 						has_next_values = true;
+						current_key = path_.current();
 						current_value = *it;
 						break;
 					}
@@ -231,6 +232,8 @@ namespace
 					const auto* section_name = (*it).data();
 					if (const auto* section = ini_.GetSection(section_name))
 					{
+						current_section = section_name;
+
 						values_mapping.insert_or_assign(it.key(), *it);
 
 						path_.push();
@@ -246,6 +249,8 @@ namespace
 		}
 
 		bool get_has_next_values() const override { return has_next_values; }
+		std::string_view get_current_section() const override { return current_section; }
+		std::string_view get_current_key() const override { return current_key; }
 		std::string_view get_current_value() const override { return current_value; }
 
 		std::string_view get_value(const char* in_path_part) const override
@@ -256,6 +261,8 @@ namespace
 
 	private:
 		bool has_next_values = false;
+		std::string_view current_section;
+		std::string_view current_key;
 		std::string_view current_value;
 
 		CSimpleIniA& ini_;
@@ -269,6 +276,26 @@ namespace
 
 namespace ym::ini
 {
+	value_wrapper::value_wrapper(const handler* in_handler, std::string_view in_section, std::string_view in_key,
+		std::string_view in_value) : handler_(in_handler), section_(in_section), key_(in_key), value_(in_value)
+	{
+	}
+
+	value_t value_wrapper::as_string() const
+	{
+		return value_;
+	}
+
+	bool value_wrapper::as_bool(bool in_default) const
+	{
+		return handler_ ? get_bool(*handler_, section_.data(), key_.data(), in_default) : in_default;
+	}
+
+	long value_wrapper::as_long(long in_default) const
+	{
+		return handler_ ? get_long(*handler_, section_.data(), key_.data(), in_default) : in_default;
+	}
+
 	path_iterator::path_iterator(const handler& in_handler, const char* in_section, const char* in_path)
 	{
 		impl_ = std::make_unique<it_impl>(in_handler.get_impl<CSimpleIniA>(), in_section, in_path);
@@ -289,6 +316,16 @@ namespace ym::ini
 	path_iterator::operator bool() const
 	{
 		return impl_->get_has_next_values();
+	}
+
+	value_t path_iterator::get_section() const
+	{
+		return impl_->get_current_section();
+	}
+
+	value_t path_iterator::get_key() const
+	{
+		return impl_->get_current_key();
 	}
 
 	value_t path_iterator::get_value(const char* in_path_part) const
@@ -395,6 +432,21 @@ namespace ym::ini
 		}
 
 		return out_values;
+	}
+
+	void for_each(const handler* in_handle, const char* in_section, const char* in_path, const std::function<void(std::string_view, std::string_view, value_wrapper)>& in_func)
+	{
+		if (in_handle != nullptr)
+		{
+			for (auto it = ym::ini::path_iterator(*in_handle, in_section, in_path); it; ++it)
+			{
+				auto&& section = it.get_section();
+				auto&& key = it.get_key();
+				auto&& value = *it;
+
+				in_func(section, key, { in_handle, section, key, value });
+			}
+		}
 	}
 
 	bool has_value(const handler& in_handler, const char* in_section, const char* in_key)
